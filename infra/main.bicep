@@ -43,6 +43,7 @@ param chatGptModelName string = 'gpt-35-turbo'
 var abbrs = loadJsonContent('abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
 var tags = { 'env-name': environmentName }
+var aoailocation = 'westeurope'
 
 // Organize resources in a resource group
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
@@ -51,18 +52,26 @@ resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   tags: tags
 }
 
-// Create an API Managament
-module apimanagement 'core/api/apimanagement.bicep' = {
-  name: 'apimanagement'
+//Create an VNET
+module vnet 'core/nw/vnet.bicep' = {
+  name: 'vnet-modulename'
   scope: rg
   params: {
-    name: !empty(apiManagementName) ? apiManagementName : '${abbrs.apiManagementService}${resourceToken}'
-    publisherEmail: publisherEmail
-    publisherName: publisherName
     location: location
-    tags: tags
   }
 }
+// Create an API Managament
+// module apimanagement 'core/api/apimanagement.bicep' = {
+//   name: 'apimanagement'
+//   scope: rg
+//   params: {
+//     name: !empty(apiManagementName) ? apiManagementName : '${abbrs.apiManagementService}${resourceToken}'
+//     publisherEmail: publisherEmail
+//     publisherName: publisherName
+//     location: location
+//     tags: tags
+//   }
+// }
 
 
 // Create an App Service Plan to group applications under the same payment plan and SKU
@@ -89,6 +98,8 @@ module backend 'core/host/appservice.bicep' = {
     name: !empty(backendServiceName) ? backendServiceName : '${abbrs.webSitesAppService}backend-${resourceToken}'
     location: location
     tags: union(tags, { 'service-name': 'backend' })
+    vnetName: vnet.outputs.OUTPUT_VNET_NAME
+    subnet0Name: vnet.outputs.OUTPUT_SUBNET0_NAME  
     appServicePlanId: appServicePlan.outputs.id
     runtimeName: 'python'
     runtimeVersion: '3.10'
@@ -97,70 +108,73 @@ module backend 'core/host/appservice.bicep' = {
     appSettings: {
       AZURE_BLOB_STORAGE_ACCOUNT: storage.outputs.name
       AZURE_BLOB_STORAGE_CONTAINER: containerName
-      AZURE_OPENAI_SERVICE: cognitiveServices.outputs.name
+      //AZURE_OPENAI_SERVICE: cognitiveServices.outputs.name
       AZURE_SEARCH_INDEX: searchIndexName
-      AZURE_SEARCH_SERVICE: searchServices.outputs.name
+      //AZURE_SEARCH_SERVICE: searchServices.outputs.name
       AZURE_OPENAI_GPT_DEPLOYMENT: gptDeploymentName
       AZURE_OPENAI_CHATGPT_DEPLOYMENT: chatGptDeploymentName
     }
   }
+  dependsOn:[
+    vnet
+  ]
 }
 
-module cognitiveServices 'core/ai/cognitiveservices.bicep' = {
-  scope: rg
-  name: 'openai'
-  params: {
-    name: !empty(cognitiveServicesAccountName) ? cognitiveServicesAccountName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
-    location: location
-    tags: tags
-    sku: {
-      name: cognitiveServicesSkuName
-    }
-    deployments: [
-      {
-        name: gptDeploymentName
-        model: {
-          format: 'OpenAI'
-          name: gptModelName
-          version: '1'
-        }
-        scaleSettings: {
-          scaleType: 'Standard'
-        }
-      }
-      {
-        name: chatGptDeploymentName
-        model: {
-          format: 'OpenAI'
-          name: chatGptModelName
-          version: '0301'
-        }
-        scaleSettings: {
-          scaleType: 'Standard'
-        }
-      }
-    ]
-  }
-}
+// module cognitiveServices 'core/ai/cognitiveservices.bicep' = {
+//   scope: rg
+//   name: 'openai'
+//   params: {
+//     name: !empty(cognitiveServicesAccountName) ? cognitiveServicesAccountName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
+//     location: aoailocation
+//     tags: tags
+//     sku: {
+//       name: cognitiveServicesSkuName
+//     }
+//     deployments: [
+//       {
+//         name: gptDeploymentName
+//         model: {
+//           format: 'OpenAI'
+//           name: gptModelName
+//           version: '1'
+//         }
+//         scaleSettings: {
+//           scaleType: 'Standard'
+//         }
+//       }
+//       {
+//         name: chatGptDeploymentName
+//         model: {
+//           format: 'OpenAI'
+//           name: chatGptModelName
+//           version: '0301'
+//         }
+//         scaleSettings: {
+//           scaleType: 'Standard'
+//         }
+//       }
+//     ]
+//   }
+// }
 
-module searchServices 'core/search/search-services.bicep' = {
-  scope: rg
-  name: 'search-services'
-  params: {
-    name: !empty(searchServicesName) ? searchServicesName : 'gptkb-${resourceToken}'
-    location: location
-    tags: tags
-    authOptions: {
-      aadOrApiKey: {
-        aadAuthFailureMode: 'http401WithBearerChallenge'
-      }
-    }
-    sku: {
-      name: searchServicesSkuName
-    }
-    semanticSearch: 'free'
-  }
-}
+// module searchServices 'core/search/search-services.bicep' = {
+//   scope: rg
+//   name: 'search-services'
+//   params: {
+//     name: !empty(searchServicesName) ? searchServicesName : 'gptkb-${resourceToken}'
+//     location: location
+//     tags: tags
+//     authOptions: {
+//       aadOrApiKey: {
+//         aadAuthFailureMode: 'http401WithBearerChallenge'
+//       }
+//     }
+//     sku: {
+//       name: searchServicesSkuName
+//     }
+//     semanticSearch: 'free'
+//   }
+// }
 
 module storage 'core/storage/storage-account.bicep' = {
   name: 'storage'
@@ -169,6 +183,8 @@ module storage 'core/storage/storage-account.bicep' = {
     name: !empty(storageAccountName) ? storageAccountName : '${abbrs.storageStorageAccounts}${resourceToken}'
     location: location
     tags: tags
+    vnetName: vnet.outputs.OUTPUT_VNET_NAME
+    subnet1Name: vnet.outputs.OUTPUT_SUBNET1_NAME  
     publicNetworkAccess: 'Enabled'
     sku: {
       name: 'Standard_ZRS'
@@ -184,6 +200,9 @@ module storage 'core/storage/storage-account.bicep' = {
       }
     ]
   }
+  dependsOn:[
+    vnet
+  ]
 }
 
 // USER ROLES
@@ -238,41 +257,41 @@ module searchContribRoleUser 'core/security/role.bicep' = {
 }
 
 // SYSTEM IDENTITIES
-module openAiRoleBackend 'core/security/role.bicep' = {
-  scope: rg
-  name: 'openai-role-backend'
-  params: {
-    principalId: backend.outputs.identityPrincipalId
-    roleDefinitionId: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
-    principalType: 'ServicePrincipal'
-  }
-}
+// module openAiRoleBackend 'core/security/role.bicep' = {
+//   scope: rg
+//   name: 'openai-role-backend'
+//   params: {
+//     principalId: backend.outputs.identityPrincipalId
+//     roleDefinitionId: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
+//     principalType: 'ServicePrincipal'
+//   }
+// }
 
-module storageRoleBackend 'core/security/role.bicep' = {
-  scope: rg
-  name: 'storage-role-backend'
-  params: {
-    principalId: backend.outputs.identityPrincipalId
-    roleDefinitionId: '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
-    principalType: 'ServicePrincipal'
-  }
-}
+// module storageRoleBackend 'core/security/role.bicep' = {
+//   scope: rg
+//   name: 'storage-role-backend'
+//   params: {
+//     principalId: backend.outputs.identityPrincipalId
+//     roleDefinitionId: '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
+//     principalType: 'ServicePrincipal'
+//   }
+// }
 
-module searchRoleBackend 'core/security/role.bicep' = {
-  scope: rg
-  name: 'search-role-backend'
-  params: {
-    principalId: backend.outputs.identityPrincipalId
-    roleDefinitionId: '1407120a-92aa-4202-b7e9-c0e197c71c8f'
-    principalType: 'ServicePrincipal'
-  }
-}
+// module searchRoleBackend 'core/security/role.bicep' = {
+//   scope: rg
+//   name: 'search-role-backend'
+//   params: {
+//     principalId: backend.outputs.identityPrincipalId
+//     roleDefinitionId: '1407120a-92aa-4202-b7e9-c0e197c71c8f'
+//     principalType: 'ServicePrincipal'
+//   }
+// }
 
 
 output AZURE_LOCATION string = location
-output AZURE_OPENAI_SERVICE string = cognitiveServices.outputs.name
+//output AZURE_OPENAI_SERVICE string = cognitiveServices.outputs.name
 output AZURE_SEARCH_INDEX string = searchIndexName
-output AZURE_SEARCH_SERVICE string = searchServices.outputs.name
+//output AZURE_SEARCH_SERVICE string = searchServices.outputs.name
 output AZURE_STORAGE_ACCOUNT string = storage.outputs.name
 output AZURE_STORAGE_CONTAINER string = containerName
 output BACKEND_URI string = backend.outputs.uri

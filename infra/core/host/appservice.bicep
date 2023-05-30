@@ -1,6 +1,8 @@
 param name string
 param location string = resourceGroup().location
 param tags object = {}
+param vnetName string
+param subnet0Name string
 
 // Reference Properties
 param applicationInsightsName string = ''
@@ -35,12 +37,21 @@ param use32BitWorkerProcess bool = false
 param ftpsState string = 'FtpsOnly'
 param healthCheckPath string = ''
 
+// Reference existing vNET
+resource existingVnet 'Microsoft.Network/virtualNetworks@2020-05-01' existing = {
+  name: vnetName
+  resource existingsubnet0 'subnets' existing = {
+    name: subnet0Name
+  }
+}
+
 resource appService 'Microsoft.Web/sites@2022-03-01' = {
   name: name
   location: location
   tags: tags
   kind: kind
   properties: {
+    virtualNetworkSubnetId: existingVnet.properties.subnets[0].id
     serverFarmId: appServicePlanId
     siteConfig: {
       linuxFxVersion: linuxFxVersion
@@ -94,6 +105,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = if (!(empty(
 resource applicationInsights 'Microsoft.Insights/components@2020-02-02' existing = if (!empty(applicationInsightsName)) {
   name: applicationInsightsName
 }
+
 
 output identityPrincipalId string = managedIdentity ? appService.identity.principalId : ''
 output name string = appService.name
