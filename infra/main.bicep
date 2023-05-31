@@ -43,7 +43,7 @@ param chatGptModelName string = 'gpt-35-turbo'
 var abbrs = loadJsonContent('abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
 var tags = { 'env-name': environmentName }
-var aoailocation = 'westeurope'
+var aoailocation = 'southcentralus'
 
 // Organize resources in a resource group
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
@@ -108,7 +108,7 @@ module backend 'core/host/appservice.bicep' = {
     appSettings: {
       AZURE_BLOB_STORAGE_ACCOUNT: storage.outputs.name
       AZURE_BLOB_STORAGE_CONTAINER: containerName
-      //AZURE_OPENAI_SERVICE: cognitiveServices.outputs.name
+      AZURE_OPENAI_SERVICE: cognitiveServices.outputs.name
       AZURE_SEARCH_INDEX: searchIndexName
       //AZURE_SEARCH_SERVICE: searchServices.outputs.name
       AZURE_OPENAI_GPT_DEPLOYMENT: gptDeploymentName
@@ -120,42 +120,47 @@ module backend 'core/host/appservice.bicep' = {
   ]
 }
 
-// module cognitiveServices 'core/ai/cognitiveservices.bicep' = {
-//   scope: rg
-//   name: 'openai'
-//   params: {
-//     name: !empty(cognitiveServicesAccountName) ? cognitiveServicesAccountName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
-//     location: aoailocation
-//     tags: tags
-//     sku: {
-//       name: cognitiveServicesSkuName
-//     }
-//     deployments: [
-//       {
-//         name: gptDeploymentName
-//         model: {
-//           format: 'OpenAI'
-//           name: gptModelName
-//           version: '1'
-//         }
-//         scaleSettings: {
-//           scaleType: 'Standard'
-//         }
-//       }
-//       {
-//         name: chatGptDeploymentName
-//         model: {
-//           format: 'OpenAI'
-//           name: chatGptModelName
-//           version: '0301'
-//         }
-//         scaleSettings: {
-//           scaleType: 'Standard'
-//         }
-//       }
-//     ]
-//   }
-// }
+module cognitiveServices 'core/ai/cognitiveservices.bicep' = {
+  scope: rg
+  name: 'openai'
+  params: {
+    name: !empty(cognitiveServicesAccountName) ? cognitiveServicesAccountName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
+    location: location
+    tags: tags
+    vnetName: vnet.outputs.OUTPUT_VNET_NAME
+    subnet1Name: vnet.outputs.OUTPUT_SUBNET1_NAME 
+    sku: {
+      name: cognitiveServicesSkuName
+    }
+    deployments: [
+      {
+        name: gptDeploymentName
+        model: {
+          format: 'OpenAI'
+          name: gptModelName
+          version: '1'
+        }
+        scaleSettings: {
+          scaleType: 'Standard'
+        }
+      }
+      {
+        name: chatGptDeploymentName
+        model: {
+          format: 'OpenAI'
+          name: chatGptModelName
+          version: '0301'
+        }
+        scaleSettings: {
+          scaleType: 'Standard'
+        }
+      }
+    ]
+  }
+  dependsOn:[
+    vnet
+  ]
+}
 
 // module searchServices 'core/search/search-services.bicep' = {
 //   scope: rg
@@ -164,6 +169,8 @@ module backend 'core/host/appservice.bicep' = {
 //     name: !empty(searchServicesName) ? searchServicesName : 'gptkb-${resourceToken}'
 //     location: location
 //     tags: tags
+//     vnetName: vnet.outputs.OUTPUT_VNET_NAME
+//     subnet1Name: vnet.outputs.OUTPUT_SUBNET1_NAME  
 //     authOptions: {
 //       aadOrApiKey: {
 //         aadAuthFailureMode: 'http401WithBearerChallenge'
@@ -174,6 +181,9 @@ module backend 'core/host/appservice.bicep' = {
 //     }
 //     semanticSearch: 'free'
 //   }
+//   dependsOn:[
+//     vnet
+//   ]
 // }
 
 module storage 'core/storage/storage-account.bicep' = {
@@ -185,7 +195,7 @@ module storage 'core/storage/storage-account.bicep' = {
     tags: tags
     vnetName: vnet.outputs.OUTPUT_VNET_NAME
     subnet1Name: vnet.outputs.OUTPUT_SUBNET1_NAME  
-    publicNetworkAccess: 'Enabled'
+    publicNetworkAccess: 'Disabled'
     sku: {
       name: 'Standard_ZRS'
     }
@@ -289,7 +299,7 @@ module searchContribRoleUser 'core/security/role.bicep' = {
 
 
 output AZURE_LOCATION string = location
-//output AZURE_OPENAI_SERVICE string = cognitiveServices.outputs.name
+output AZURE_OPENAI_SERVICE string = cognitiveServices.outputs.name
 output AZURE_SEARCH_INDEX string = searchIndexName
 //output AZURE_SEARCH_SERVICE string = searchServices.outputs.name
 output AZURE_STORAGE_ACCOUNT string = storage.outputs.name

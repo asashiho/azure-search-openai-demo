@@ -8,7 +8,7 @@
 ---
 ## ワークショップ概要
 
- <span style="font-weight: bold; color: steelblue;"> 研究論文のサマリー/アジェンダを作成するチャットシステム</span> の作成を通して、Azure OpenAI Service やAzure Cognitive Searchなどの使い方やチャットシステムを社内に展開するためのWebアプリケーションの作成やAPI基盤の整備などの基礎を学びます。
+ <span style="font-weight: bold; color: steelblue;"> 研究論文の内容もとに適切な回答を作成するチャットシステム</span> の作成を通して、Azure OpenAI Service やAzure Cognitive Searchなどの使い方やチャットシステムを社内に展開するためのWebアプリケーションの作成やAPI基盤の整備などの基礎を学びます。
 
 このワークショップの特徴は次の2つです。
 

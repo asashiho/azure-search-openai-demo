@@ -12,7 +12,7 @@ OpenAIによって開発された大規模な言語モデルGPTを活用する�
 
 ---
 
-このワークショップでは、 <span style="font-weight: bold; color: steelblue;"> 研究論文のサマリー/アジェンダを作成するチャットシステム</span> の作成を通して、Azure OpenAI Service やAzure Cognitive Searchなどの使い方やチャットシステムを社内に展開するためのWebアプリケーションの作成やAPI基盤の整備などの基礎を学びます。
+このワークショップでは、 <span style="font-weight: bold; color: steelblue;"> 研究論文の内容もとに適切な回答を作成するチャットシステム</span> の作成を通して、Azure OpenAI Service やAzure Cognitive Searchなどの使い方やチャットシステムを社内に展開するためのWebアプリケーションの作成やAPI基盤の整備などの基礎を学びます。
 
 このワークショップの特徴は次の2つです。
 
@@ -22,7 +22,7 @@ ChatGPT(gpt-35-turbo)モデルでトレーニングされたデータに基づ�
 
 - **回答の根拠を明確にする**
 
-ChatGPTの回答に「引用」をテキストに付加することで信頼できる応答を生成します
+ChatGPTの回答に「引用」をテキストに付加することで、より信頼できる応答を生成します
 
 
 ![](images/overview.png)
@@ -66,33 +66,47 @@ ChatGPTの回答に「引用」をテキストに付加することで信頼で�
 ## 💻ハンズオン
 ### 1. サンプルアプリケーションの準備
 
-ご自身のアカウントでGitHubを開き、[こちら](https://github.com/asashiho/azure-search-openai-demo)のサンプルコードを自分のリポジトリにForkします。
 
-次のコマンドを実行してForkしたリポジトリをクローンします。
+まず、ブラウザを開きご自身のアカウントでGitHubにアクセスします。そして、[こちら](https://github.com/asashiho/azure-search-openai-demo)のサンプルコードを自分のリポジトリにForkします。
+
+
+
+次に、Visual Studio Codeを起動します。 **[表示]-[拡張機能]** を選び、検索で **「Dev Containers」** を選び、この拡張機能を **[インストール]** をします。これはコンテナ環境で開発環境を動かすための拡張機能です。
+
+
+![](images/vscode-setup-1.png)
+
+
+ターミナルから次のコマンドを実行してForkしたリポジトリをクローンします。
 
 ```bash
 git clone https://github.com/<Your_GitHub_Name>/azure-search-openai-demo
 ```
 
 
-次にVisual Studio Codeを起動します。 **[表示]-[拡張機能]** を選び、検索で **「Dev Containers」** を選び、この拡張機能を **[インストール]** をします。これはコンテナ環境で開発環境を動かすための拡張機能です。
-
-
-![](images/vscode-setup-1.png)
-
-次に **[ファイル]-[フォルダを開く]** を選び **「azure-search-openai-demo」** フォルダを開いてください。
+次に **[ファイル]-[フォルダを開く]** を選び クローンした **「`azure-search-openai-demo`」** フォルダを開いてください。
 
 !>もし異なるフォルダを開いている場合、本ワークショップで必要な環境がセットアップされませんので、注意してください。
 
 ![](images/vscode-devcontainer1.png)
 
-サンプルフォルダを開いたら、Visual Studio Codeの左下の[`><`]アイコンをクリックして「`ReOpen in Container`」を選びます。
+サンプルフォルダを開いたら、Visual Studio Codeの左下の[`><`]アイコンをクリックして「`Reopen in Container`」を選びます。
 
 ![](images/vscode-devcontainer2.png)
 
-しばらくすると、[`>< Dev Container: Python3`]となり、次のようなターミナル(コマンドを実行する箇所)が表示されます。これは、開発に必要な環境一式がDockerコンテナとして起動できるVisual Studio CodeのDevContainersという機能を使っています。もしエラー等で起動できない場合は、ローカルPCでDockerコンテナが動作しているかを確認してください。
+ターミナルを確認すると、今回のワークショップで使用するライブラリ群がインストールされているのがわかります。
+
+![](images/vscode-devcontainer4.png)
+
+数分するとインストールが完了します。「`Done. Press any key to close the terminal.`」が表示されたら、任意のキーを押します。
+
+![](images/vscode-devcontainer5.png)
+
+
+すると[`>< Dev Container: Python3`]となり、次のようなターミナル(コマンドを実行する箇所)が表示されます。これは、開発に必要な環境一式がDockerコンテナとして起動できるVisual Studio CodeのDevContainersという機能を使っています。もしエラー等で起動できない場合は、Visual Studio Codeを再起動しローカルPCでDockerコンテナが動作しているかを確認してください。
 
 ![](images/vscode-devcontainer3.png)
+
 
 
 これで開発の準備ができました。
@@ -133,8 +147,6 @@ az ad signed-in-user show --query id --out tsv
 ```bash
 cd infra
 
-az bicep upgrade
-
 az deployment sub create \
   -l eastus \
   --template-file main.bicep
@@ -166,10 +178,32 @@ az deployment sub create \
 
 ![](images/bicep.png)
 
-Azure環境の作成は40分程度かかります。コマンドはそのままで次の手順3に進んでください。
+Azure環境の作成は40分程度かかります。
 
 
-### 3. データセットのテキスト化
+## 📝講義
+
+Azureを利用するにあたり、セキュリティの設定は欠かせません。ここでは、Azure OpenAI Serviceはじめ、Azureの各種サービスを安全に利用するために知っておきたいネットワークセキュリティに関する講義を行います。
+
+資料:
+xxx
+
+アーキテクチャ:
+xxx
+
+
+
+# **Part2: 業務データを利用したデータセットの作成** 
+このパートでは、PDFなどの業務データをもとにデータセットを作成します。
+
+![](images/part2-overview.png)
+
+#### このパートのゴール
+* Azure Form Recognizer を使ってドキュメントから文字データの抽出ができる
+
+## 💻ハンズオン
+
+### 1. データセットのテキスト化
 ?>ワークショップに必要なデータはあらかじめ`data`ディレクトリに準備されています。そのためこの手順は飛ばして、Part2に進んでもかまいません。またお手持ちのデータをもとに検索を行いたい場合は、データを差し替えてください。
 
 Azure Form Recognizerは、Microsoft Azureのサービスの一つであり、OCR(Optical Character Recognition)と機械学習を利用してテキストを自動的に抽出し、構造化されたデータに変換するためのサービスです。
@@ -216,6 +250,11 @@ Azureポータルを開き、「 **Form Recognizer** 」を選びます。
 リソースが作成できたら、「 **Form Recognizerスタジオ** 」 を起動します。
 ![](images/form9.png)
 
+
+次に、サブスクリプション/リソースグループ/Cognitive Service Resourceを設定してください。 
+ 
+![](images/form9-1.png)
+
 これはGUIでドキュメントの読み取りやレイアウトなどの構成を試すことができるツールです。
 
 ![](images/form10.png)
@@ -251,10 +290,10 @@ Form Recognizerを使って、身近なドキュメントの読み取りを試�
 [チュートリアル: Form Recognizer で Azure Logic Apps を使用する](https://learn.microsoft.com/ja-jp/azure/applied-ai-services/form-recognizer/tutorial-logic-apps?view=form-recog-2.1.0&viewFallbackFrom=form-recog-3.0.0)
 
 
-# **Part2: 業務データの検索システム構築** 
+# **Part3: 業務データの検索システム構築** 
 このパートではまず作成したテキストデータをもとに検索システムを作ります。次に、Azure OpenAI Serviceを使ってChatGPTで検索クエリーを作成し検索結果をもとに応答を返すREST APIを作成します。
 
-![](images/part2-overview.png)
+![](images/part3-overview.png)
 
 
 #### このパートのゴール
@@ -520,14 +559,14 @@ https://app-backend-xxx.azurewebsites.net/swagger.json
 
 
 
-# **Part3: API統合管理基盤の作成** 
+# **Part4: API統合管理基盤の作成** 
 Azure Cognitive Search/Azure OpenAI Service/AppServiceを使って検索エンジンから自然言語で応答を返すAPIが作成できました。これをWebブラウザから利用できるシングルページアプリケーションやモバイルアプリケーション、ローコードツールで開発したアプリケーションなどから便利に利用できるよう、APIの統合管理を行います。
 
 Azure API Managementは、APIを統合管理するサービスでAPIプロキシ/管理ポータル/ポリシー管理/分析などの機能を提供します。
 
 Azure API Managementを使うと、クライアントアプリケーションとの間でリクエストとレスポンスを中継することで、トラフィック制御や認証/キャッシングなどができます。また、どのぐらいAPIが利用されているかなどの情報を分析できたり、「APIを呼び出せるのは1分間に10回まで」などのポリシーを適用して流量を制御できます。
 
-![](images/part3-overview.png)
+![](images/part4-overview.png)
 
 #### このパートのゴール
 * API管理の必要性を理解する
@@ -548,7 +587,7 @@ API Managementで管理したいAPIを登録します。今回は[`OpenAPI`]を�
 
 ![](images/apim3.png)
 
-次に、[ **Create from OpenAPI specification** ]ダイアログが表示されるので、「 **OpenAPI specification** 」に以下の`swagger.json`ファイルを指定します。
+次に、[ **Create from OpenAPI specification** ]ダイアログが表示されるので、「 **OpenAPI specification** 」に以下の`swagger.json`ファイルを指定します。**`API URL suffix`** には「`api`」を指定します。
 
 ```bash
 https://app-backend-<your_name>.azurewebsites.net/swagger.json
@@ -621,7 +660,7 @@ API Managementは高機能なAPI管理サービスです。次のような課題
 
 
 
-# **Part4: フロントエンドアプリケーションの開発/デプロイ** 
+# **Part5: フロントエンドアプリケーションの開発/デプロイ** 
 
 いよいよ動作するAPIができたので、このAPIのにアクセスするチャットアプリを作成します。サンプルはTypeScriptとReactを使用した静的Webアプリケーションで、ソースコードは`/app/frontend`にあります。
 
@@ -630,7 +669,7 @@ Azure Static Web Appsは、フロントエンドの静的Webアプリケーシ�
 Azure Static Web Appsは、GitHubなどのソースコードリポジトリと連携して、自動的にビルド、デプロイ、ホスティングを行います。また、Azure FunctionsやAzure Logic AppsなどのサーバーレスバックエンドやAPI Managementと統合することも可能です。
 
 
-![](images/part4-overview.png)
+![](images/part5-overview.png)
 
 #### このパートのゴール
 * Static Web Appsを使ってフロントエンドアプリケーションを動かすことができる
@@ -638,6 +677,8 @@ Azure Static Web Appsは、GitHubなどのソースコードリポジトリと�
 * APIキーの安全な取り扱い方法を知る
 
 ## 💻ハンズオン
+
+
 ### 1. Frontendのデプロイ
 
 Azureポータルを開き、「 **Web&Mobile** 」の中から「 **静的Webアプリ** 」を選びます。
@@ -754,6 +795,171 @@ AzureポータルからfrontendのURLを調べブラウザでアクセスしま�
 また余力がある人は、実際にアプリケーションを開発して動作確認をしてみてください。
 
 ![](images/powerapps-connector.png)
+
+# **付録A: フロントアプリのユーザ認証** 
+
+?> 以下の手順は、ワークショップで時間が余ったらお試しください。
+
+Static Web Appsには組み込み認証機能があり、Static Web Appsはデフォルトで次のプロバイダでの認証が有効になっています
+
+* Azure Active Directory
+* GitHub
+* Twitte
+
+組み込み認証の設定はサンプルリポジトリの`app/frontend/`にある「`staticwebapps.config.json`」で行います。
+
+`staticwebapps.config.json.sample`を`staticwebapps.config`にリネームしてください。
+
+
+次の設定ファイルでは、Azure ADでのユーザ認証を行い(=TwitterとGitHubの認証を無効化)、認証されていないユーザは認証画面に遷移するよう設定している例です。
+
+```staticwebapps.config
+{
+  "routes": [
+      {
+          "route": "/.auth/login/twitter",
+          "statusCode": 404
+      },
+      {
+          "route": "/.auth/login/github",
+          "statusCode": 404
+      },
+      {
+          "route": "/*",
+          "allowedRoles": [
+              "authenticated"
+          ]
+      }
+  ],
+  "responseOverrides": {
+      "401": {
+          "statusCode": 302,
+          "redirect": "/.auth/login/aad"
+      }
+  }
+}
+```
+
+Visual Studio Codeのターミナルから次のコマンドを実行し、`staticwebapps.config`をプッシュします。
+
+```bash
+git add app/frontend/staticwebapps.config
+git commit -m "Add: Authentication to Frontend"
+
+git push origin workshop
+```
+
+ふたたび、AzureポータルからfrontendのURLを確認しアクセスします。
+すると、Azure ADの認証ダイアログが表示されるので、ユーザIDとパスワードを入力します。
+
+![](images/swa-auth2.png)
+
+![](images/swa-auth3.png)
+
+認証が成功すると、アプリケーションの同意画面が表示されるので、「`Grant Consent`」をクリックしてください。
+
+![](images/swa-auth1.png)
+
+これで、認証されたユーザのみが利用できるチャットアプリケーションが作成できました。
+
+![](images/swa-auth4.png)
+
+
+
+#### (参考) ログインログアウト処理
+
+Static Web Appsでログイン処理とログアウト処理を行いたいときは`/.auth/login/<provider name>`および`/.auth/logout/<provider name>`に対してリンクを設定します。
+
+|       プロバイダ       |    ログインルート    |
+| ---------------------- | -------------------- |
+| Azure Active Directory | /.auth/login/aad     |
+| GitHub                 | /.auth/login/github  |
+| Twitter                | /.auth/login/twitter |
+
+たとえば、Azure ADの場合は次のようになります。
+```html
+<a href="/.auth/login/aad" role="button">Login</a>
+<a href="/.auth/logout/aad"role="button">Logout</a>
+```
+
+?> 公式ドキュメント: [Azure Static Web Apps の認証と承認](https://learn.microsoft.com/ja-jp/azure/static-web-apps/authentication-authorization?tabs=invitations)
+
+
+#### (参考) ユーザ情報の取得
+Static Web Appsでは`/.auth/me` を呼び出して認証されたユーザ情報が取得できます。
+
+`/.auth/me` にアクセスすると次のような情報が取得できます。
+```json
+{
+  "clientPrincipal": {
+    "identityProvider": "aad",
+    "userId": "xxxxxx",
+    "userDetails": "user@domain.co.jp",
+    "userRoles": [
+      "anonymous",
+      "authenticated"
+    ]
+  }
+}
+```
+
+または、次のコードでユーザ情報を取得できます。
+
+```javascript
+async function getUserInfo() {
+  const response = await fetch('/.auth/me');
+  const payload = await response.json();
+  const { clientPrincipal } = payload;
+  return clientPrincipal;
+}
+
+console.log(await getUserInfo());
+```
+
+
+?> 公式ドキュメント: [Azure Static Web Apps でのユーザー情報へのアクセス](https://learn.microsoft.com/ja-jp/azure/static-web-apps/user-information?tabs=javascript)
+
+
+#### (参考) ロールの管理
+Static Web Appsのアプリにアクセスするすべてのユーザーは、1つまたは複数のロールに属しています。 ユーザは、以下の2つの組み込みロールに属することができます。
+
+
+|     ロール     |                              説明                               |
+| -------------- | --------------------------------------------------------------- |
+| 匿名ロール     | すべてのユーザーは自動的に 「匿名」 ロールに属する              |
+| 認証済みロール | ログインしているすべてのユーザーは、「認証済み」 ロールに属する |
+
+
+組み込みロール以外にカスタム ロールをユーザーに割り当てることもできます。手順については、[ロール管理](https://learn.microsoft.com/ja-jp/azure/static-web-apps/authentication-authorization?tabs=invitations#role-management)を確認してください。
+
+
+#### (参考) カスタム認証
+Azure Static Web Apps が提供する組み込み認証では、Azureが管理するプロバイダー登録が使用されます。登録の柔軟性を高めるため、既定値をカスタム登録でオーバーライドできます。
+
+またカスタム認証により、OpenID Connect をサポートするカスタム プロバイダーを構成できます。この構成では、複数の外部プロバイダーを登録できます。
+
+ただし、カスタム登録を使用すると、事前構成済みのすべてのプロバイダーが無効になります。
+
+カスタム認証を行うときは、「`staticwebapps.config.json`」に次の設定を行います。
+
+```json
+  "auth": {
+    "identityProviders": {
+        "azureActiveDirectory": {
+            "registration": {
+                "openIdIssuer": "https://login.microsoftonline.com/<AAD_TenantID>",
+                "clientIdSettingName": "<AAD_ClientID>",
+                "clientSecretSettingName": "<AAD_Client_Secret>"
+            }
+        }
+    }
+  },
+```
+
+?> 公式ドキュメント: [Azure Static Web Apps でのカスタム認証](https://learn.microsoft.com/ja-jp/azure/static-web-apps/authentication-custom?tabs=aad)
+
+
+# **付録B: PowerAppsによるアプリ開発** 
 
 
 # 🗑Azureリソースの削除
