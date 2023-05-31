@@ -21,16 +21,9 @@ param sku object = { name: 'Standard_LRS' }
 
 param containers array = []
 
-param zones array = [
-  'monitor.azure.com'
-  'oms.opinsights.azure.com'
-  'ods.opinsights.azure.com'
-  'agentsvc.azure-automation.net'
-  'blob.${environment().suffixes.storage}' // blob.core.windows.net
-]
+param zones string = 'blob.${environment().suffixes.storage}' // blob.core.windows.net
 
 var PRIVATE_ENDPOINT_NAME = 'PE-StrageAccount'
-//var PRIVATE_DNS_ZONE_NAME = 'blob.windows.core.net'
 
 // Reference existing vNET
 resource existingVnet 'Microsoft.Network/virtualNetworks@2020-05-01' existing = {
@@ -98,58 +91,34 @@ resource storage 'Microsoft.Storage/storageAccounts@2022-05-01' = {
     }
   }
 
-  resource privateDnsZoneForAmpls 'Microsoft.Network/privateDnsZones@2020-06-01' = [for zone in zones: {
+  resource privateDnsZoneForStorage 'Microsoft.Network/privateDnsZones@2020-06-01' = {
     location: 'global'
-    name: 'privatelink.${zone}'
+    name: 'privatelink.${zones}'
     properties: {
     }
-  }]
+  }
   
-  // resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  //   parent: privateDnsZone
-  //   name: '${PRIVATE_DNS_ZONE_NAME}-link'
-  //   location: 'global'
-  //   properties: {
-  //     registrationEnabled: false
-  //     virtualNetwork: {
-  //       id: existingVnet.id
-  //     }
-  //   }
-  // }
+  resource vnetLinks 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+    parent: privateDnsZoneForStorage
+    name: '${privateDnsZoneForStorage.name}-${uniqueString(existingVnet.id)}' 
+    location: 'global'
+    properties: {
+      registrationEnabled: false
+      virtualNetwork: {
+        id: existingVnet.id
+      }
+    }
+  }
 
   resource peDnsGroupForAmpls 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-05-01' = {
-    parent: privateEndpoint // 設定する Private Endpoint を Parenet で参照
-    name: 'pvtEndpointDnsGroupForAmpls'
+    parent: privateEndpoint
+    name: 'defalut'
     properties: {
       privateDnsZoneConfigs: [
         {
-          name: privateDnsZoneForAmpls[0].name
+          name: privateDnsZoneForStorage.name
           properties: {
-            privateDnsZoneId: privateDnsZoneForAmpls[0].id
-          }
-        }
-        {
-          name: privateDnsZoneForAmpls[1].name
-          properties: {
-            privateDnsZoneId: privateDnsZoneForAmpls[1].id
-          }
-        }
-        {
-          name: privateDnsZoneForAmpls[2].name
-          properties: {
-            privateDnsZoneId: privateDnsZoneForAmpls[2].id
-          }
-        }
-        {
-          name: privateDnsZoneForAmpls[3].name
-          properties: {
-            privateDnsZoneId: privateDnsZoneForAmpls[3].id
-          }
-        }
-        {
-          name: privateDnsZoneForAmpls[4].name
-          properties: {
-            privateDnsZoneId: privateDnsZoneForAmpls[4].id
+            privateDnsZoneId: privateDnsZoneForStorage.id
           }
         }
       ]
