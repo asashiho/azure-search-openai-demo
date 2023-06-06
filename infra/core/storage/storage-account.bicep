@@ -2,7 +2,7 @@ param name string
 param location string = resourceGroup().location
 param tags object = {}
 param vnetName string
-param subnet1Name string
+param subnet2Name string
 
 @allowed([ 'Hot', 'Cool', 'Premium' ])
 param accessTier string = 'Hot'
@@ -28,8 +28,8 @@ var PRIVATE_ENDPOINT_NAME = 'PE-StrageAccount'
 // Reference existing vNET
 resource existingVnet 'Microsoft.Network/virtualNetworks@2020-05-01' existing = {
   name: vnetName
-  resource existingsubnet1 'subnets' existing = {
-    name: subnet1Name
+  resource existingsubnet2 'subnets' existing = {
+    name: subnet2Name
   }
 }
 
@@ -74,7 +74,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2022-05-01' = {
     location: location
     properties: {
       subnet: {
-        id: existingVnet::existingsubnet1.id
+        id: existingVnet::existingsubnet2.id
       }
       customNetworkInterfaceName: '${PRIVATE_ENDPOINT_NAME}-nic'
       privateLinkServiceConnections: [

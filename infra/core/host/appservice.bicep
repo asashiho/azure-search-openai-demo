@@ -3,6 +3,7 @@ param location string = resourceGroup().location
 param tags object = {}
 param vnetName string
 param subnet0Name string
+param subnet1Name string
 
 // Reference Properties
 param applicationInsightsName string = ''
@@ -38,11 +39,18 @@ param use32BitWorkerProcess bool = false
 param ftpsState string = 'FtpsOnly'
 param healthCheckPath string = ''
 
+param zones string = 'azurewebsites.net'
+
+var PRIVATE_ENDPOINT_NAME = 'PE-AppService'
+
 // Reference existing vNET
 resource existingVnet 'Microsoft.Network/virtualNetworks@2020-05-01' existing = {
   name: vnetName
   resource existingsubnet0 'subnets' existing = {
     name: subnet0Name
+  }
+  resource existingsubnet1 'subnets' existing = {
+    name: subnet1Name
   }
 }
 
@@ -52,7 +60,7 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
   tags: tags
   kind: kind
   properties: {
-    virtualNetworkSubnetId: existingVnet.properties.subnets[0].id
+    virtualNetworkSubnetId: existingVnet.properties.subnets[1].id
     serverFarmId: appServicePlanId
     siteConfig: {
       vnetRouteAllEnabled: vnetRouteAllEnabled
@@ -108,6 +116,61 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' existing
   name: applicationInsightsName
 }
 
+resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-05-01' = {
+  name: PRIVATE_ENDPOINT_NAME
+  location: location
+  properties: {
+    subnet: {
+      id: existingVnet::existingsubnet0.id
+    }
+    customNetworkInterfaceName: '${PRIVATE_ENDPOINT_NAME}-nic'
+    privateLinkServiceConnections: [
+      {
+        name: PRIVATE_ENDPOINT_NAME
+        properties: {
+          privateLinkServiceId: appService.id
+          groupIds: [
+            'sites'
+          ]
+        }
+      }
+    ]
+  }
+}
+
+resource privateDnsZoneForAppService 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+  location: 'global'
+  name: 'privatelink.${zones}'
+  properties: {
+  }
+}
+
+resource vnetLinks 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  parent: privateDnsZoneForAppService
+  name: '${privateDnsZoneForAppService.name}-${uniqueString(existingVnet.id)}' 
+  location: 'global'
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: existingVnet.id
+    }
+  }
+}
+
+resource peDnsGroupForAmpls 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-05-01' = {
+  parent: privateEndpoint
+  name: 'default'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: privateDnsZoneForAppService.name
+        properties: {
+          privateDnsZoneId: privateDnsZoneForAppService.id
+        }
+      }
+    ]
+  }
+}
 
 output identityPrincipalId string = managedIdentity ? appService.identity.principalId : ''
 output name string = appService.name
