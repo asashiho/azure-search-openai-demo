@@ -24,6 +24,8 @@ const Layout = () => {
         }
     };
 
+    getLoginUserName();
+
     return (
         <div className={styles.layout}>
             <header className={styles.header} role={"banner"}>
@@ -35,7 +37,7 @@ const Layout = () => {
                         <ul className={styles.headerNavList}>
                             <li>
                                 <NavLink to="/" className={({ isActive }) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}>
-                                    一般チャット
+                                    企業内チャット
                                 </NavLink>
                             </li>
                             <li className={styles.headerNavLeftMargin}>
@@ -57,7 +59,7 @@ const Layout = () => {
                             </li>
                         </ul>
                     </nav>
-                    <h4 className={styles.headerRightText}>{loginUser}</h4>
+                    <h3 className={styles.headerRightText}>{loginUser}</h3>
                 </div>
             </header>
 
