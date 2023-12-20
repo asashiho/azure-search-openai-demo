@@ -23,7 +23,7 @@ class ReadRetrieveReadApproach(AskApproach):
     """
 
     template_prefix = \
-"あなたは、鉄道技術に関する質問をサポートするインテリジェントアシスタントです。 " \
+"あなたは、ChatGPTにおけるプロンプトの書き方や業務効率化に関する質問をサポートするインテリジェントアシスタントです。 " \
 "以下の情報源に記載されているデータのみを使用して質問に答えてください。 " \
 "表形式の情報については、HTMLとして返してください。マークダウン形式は返さないでください。" \
 "各ソースには、名前の後にコロンと実際のデータが続き、レスポンスで使用するデータごとにソース名を引用します。" \
@@ -41,7 +41,7 @@ Question: {input}
 
 Thought: {agent_scratchpad}"""
 
-    CognitiveSearchToolDescription = "鉄道技術を知りたいときに便利です"
+    CognitiveSearchToolDescription = "CharGPTのユースケースやプロンプトのサンプルを知りたいときに便利です"
 
     def __init__(self, search_client: SearchClient, openai_deployment: str, embedding_deployment: str, sourcepage_field: str, content_field: str):
         self.search_client = search_client

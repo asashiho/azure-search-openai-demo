@@ -15,7 +15,7 @@ class RetrieveThenReadApproach(AskApproach):
     """
 
     system_chat_template = \
-"あなたは、鉄道技術に関する質問をサポートするインテリジェントアシスタントです。 " + \
+"あなたは、ChatGPTにおけるプロンプトの書き方や業務効率化に関する質問をサポートするインテリジェントアシスタントです。 " + \
 "相手が「わたし」で質問しても、「あなた」を使って質問者を指してください。" + \
 "以下の資料に記載されているデータのみを使って、質問に答えてください。" + \
 "表形式の情報については、HTMLとして返してください。マークダウン形式は返さないでください。"  + \
@@ -24,13 +24,13 @@ class RetrieveThenReadApproach(AskApproach):
 
     #shots/sample conversation
     question = """
-'水素ハイブリッド電車とはなんですか?'
+'ChatGPTでどのようなことができますか？'
 
 Sources:
-info1.txt: 水素をエネルギー源とする燃料電池は、高いエネルギー変換効率と環境負荷の少なさが特徴
-info2.txt: 燃料電池自動車やバスの技術を鉄道車両の技術と融合・応用することにより、水素ハイブリッド電車を開発し、実証試験を始めた。
+info1.txt: 様々な業務を効率化することができる。例えば、文章添削やプログラムの作成などを支援できる。
+info2.txt: ChatGPTに作業を依頼する場合は、実現したい内容の他に、前提条件を具体的に示すことが重要。
 """
-    answer = "水素を燃料とする燃料電池は、高いエネルギー変換効率と環境負荷の少なさが特徴[info1.txt]です。この技術を鉄道車両に応用し、水素ハイブリッド電車を開発し、実証試験を始めました。[info2.txt] "
+    answer = "例えば、文章添削やプログラムの作成[info1.txt]などを支援できます。作業を依頼する際は、実現したい内容の他に、前提条件を具体的に示すことが重要です[info2.txt] "
 
     def __init__(self, search_client: SearchClient, openai_deployment: str, chatgpt_model: str, embedding_deployment: str, sourcepage_field: str, content_field: str):
         self.search_client = search_client

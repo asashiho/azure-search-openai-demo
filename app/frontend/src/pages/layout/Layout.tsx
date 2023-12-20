@@ -1,27 +1,46 @@
+import { useState, useMemo } from "react";
 import { Outlet, NavLink, Link } from "react-router-dom";
+import { AccessToken, Claim } from "../../api";
 
 import github from "../../assets/github.svg";
 
 import styles from "./Layout.module.css";
 
 const Layout = () => {
+    const [loginUser, setLoginUser] = useState<string>("");
+
+    const getLoginUserName = async () => {
+        const loginUser: string = "";
+
+        try {
+            const result = await fetch("/.auth/me");
+
+            const response: AccessToken[] = await result.json();
+            const loginUserClaim = response[0].user_claims.find((claim: Claim) => claim.typ === "preferred_username");
+            if (loginUserClaim) setLoginUser(loginUserClaim.val);
+            else setLoginUser(response[0].user_id);
+        } catch (e) {
+            setLoginUser("anonymous");
+        }
+    };
+
     return (
         <div className={styles.layout}>
             <header className={styles.header} role={"banner"}>
                 <div className={styles.headerContainer}>
                     <Link to="/" className={styles.headerTitleContainer}>
-                        <h3 className={styles.headerTitle}>GPT + Enterprise data | Sample</h3>
+                        <h3 className={styles.headerTitle}>SAWAI AI Chat</h3>
                     </Link>
                     <nav>
                         <ul className={styles.headerNavList}>
                             <li>
                                 <NavLink to="/" className={({ isActive }) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}>
-                                    Chat
+                                    一般チャット
                                 </NavLink>
                             </li>
                             <li className={styles.headerNavLeftMargin}>
                                 <NavLink to="/qa" className={({ isActive }) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}>
-                                    Ask a question
+                                    社内文書検索
                                 </NavLink>
                             </li>
                             <li className={styles.headerNavLeftMargin}>
@@ -38,7 +57,7 @@ const Layout = () => {
                             </li>
                         </ul>
                     </nav>
-                    <h4 className={styles.headerRightText}>Azure OpenAI + Cognitive Search</h4>
+                    <h4 className={styles.headerRightText}>{loginUser}</h4>
                 </div>
             </header>
 
