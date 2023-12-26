@@ -9,6 +9,9 @@ from core.messagebuilder import MessageBuilder
 from core.modelhelper import get_token_limit
 from text import nonewlines
 
+# ------------------------COSMOSDBロギング用追加:start------------------------
+from approaches.chatlogging import write_chatlog, ApproachType
+# ------------------------------------end-------------------------------------
 
 class ChatReadRetrieveReadApproach(ChatApproach):
     # Chat roles
@@ -43,7 +46,10 @@ class ChatReadRetrieveReadApproach(ChatApproach):
         self.content_field = content_field
         self.chatgpt_token_limit = get_token_limit(chatgpt_model)
 
-    async def run(self, history: list[dict[str, str]], overrides: dict[str, Any]) -> Any:
+    # ------------------------COSMOSDBロギング用追加:start------------------------
+    # user_nameを引数に追加
+    async def run(self, user_name:str,history: list[dict[str, str]], overrides: dict[str, Any]) -> Any:
+    # ------------------------------------end-------------------------------------
         has_text = overrides.get("retrieval_mode") in ["text", "hybrid", None]
         has_vector = overrides.get("retrieval_mode") in ["vectors", "hybrid", None]
         use_semantic_captions = True if overrides.get("semantic_captions") and has_text else False
@@ -74,7 +80,9 @@ class ChatReadRetrieveReadApproach(ChatApproach):
         query_text = chat_completion.choices[0].message.content
         if query_text.strip() == "0":
             query_text = history[-1]["user"] # Use the last user input if we failed to generate a better query
-
+        # ------------------------COSMOSDBロギング用追加:start------------------------
+        total_tokens = chat_completion.usage.total_tokens
+        # ------------------------------------end-------------------------------------
         # STEP 2: Retrieve relevant documents from the search index with the GPT optimized query
 
         # If retrieval mode includes vectors, compute an embedding for the query
@@ -143,6 +151,13 @@ class ChatReadRetrieveReadApproach(ChatApproach):
 
         chat_content = chat_completion.choices[0].message.content
 
+        # ------------------------COSMOSDBロギング用追加:start------------------------
+        total_tokens += chat_completion.usage.total_tokens
+
+        input_text = history[-1]["user"]
+        write_chatlog(ApproachType.Chat, user_name, total_tokens, input_text, chat_content, query_text)
+        # ------------------------------------end-------------------------------------
+        
         msg_to_display = '\n\n'.join([str(message) for message in messages])
 
         return {"data_points": results, "answer": chat_content, "thoughts": f"Searched for:<br>{query_text}<br><br>Conversations:<br>" + msg_to_display.replace('\n', '<br>')}

@@ -8,6 +8,9 @@ from approaches.approach import AskApproach
 from core.messagebuilder import MessageBuilder
 from text import nonewlines
 
+# ------------------------COSMOSDBロギング用追加:start------------------------
+from approaches.chatlogging import write_chatlog, ApproachType
+# ------------------------------------end-------------------------------------
 
 class RetrieveThenReadApproach(AskApproach):
     """
@@ -40,7 +43,10 @@ info2.txt: ChatGPTに作業を依頼する場合は、実現したい内容の�
         self.sourcepage_field = sourcepage_field
         self.content_field = content_field
 
-    async def run(self, q: str, overrides: dict[str, Any]) -> Any:
+    # ------------------------COSMOSDBロギング用追加:start------------------------
+    # user_nameを引数に追加
+    async def run(self,user_name:str, q: str, overrides: dict[str, Any]) -> Any:
+    # ------------------------------------end-------------------------------------
         has_text = overrides.get("retrieval_mode") in ["text", "hybrid", None]
         has_vector = overrides.get("retrieval_mode") in ["vectors", "hybrid", None]
         use_semantic_captions = True if overrides.get("semantic_captions") and has_text else False
@@ -101,5 +107,12 @@ info2.txt: ChatGPTに作業を依頼する場合は、実現したい内容の�
             temperature=overrides.get("temperature") or 0.3,
             max_tokens=1024,
             n=1)
+
+        # ------------------------COSMOSDBロギング用追加:start------------------------
+        total_tokens = chat_completion.usage.total_tokens
+        ask_content = chat_completion.choices[0].message.content
+
+        write_chatlog(ApproachType.Ask, user_name, total_tokens, "", ask_content, query_text)
+        # ------------------------------------end-------------------------------------
 
         return {"data_points": results, "answer": chat_completion.choices[0].message.content, "thoughts": f"Question:<br>{query_text}<br><br>Prompt:<br>" + '\n\n'.join([str(message) for message in messages])}

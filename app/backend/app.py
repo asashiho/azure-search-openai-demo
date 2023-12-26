@@ -1,8 +1,9 @@
 import io
-import logging
 import mimetypes
 import os
 import time
+import json
+from logging import getLogger,config
 
 import openai
 from azure.identity.aio import DefaultAzureCredential
@@ -23,6 +24,16 @@ from approaches.chatreadretrieveread import ChatReadRetrieveReadApproach
 from approaches.readdecomposeask import ReadDecomposeAsk
 from approaches.readretrieveread import ReadRetrieveReadApproach
 from approaches.retrievethenread import RetrieveThenReadApproach
+
+# ------------------------COSMOSDBロギング用追加:start------------------------
+from approaches.chatlogging import get_user_name, write_error
+# ------------------------------------end-------------------------------------
+
+logger = getLogger(__name__)
+with open('log_config.json', 'r') as f:
+    log_conf = json.load(f)
+
+config.dictConfig(log_conf)
 
 # Replace these with your own values, either in environment variables or directly here
 AZURE_STORAGE_ACCOUNT = os.getenv("AZURE_STORAGE_ACCOUNT", "mystorageaccount")
@@ -83,13 +94,21 @@ async def ask():
         return jsonify({"error": "request must be json"}), 415
     request_json = await request.get_json()
     approach = request_json["approach"]
+    # ------------------------COSMOSDBロギング用追加:start------------------------
+    user_name = get_user_name(request)
+    # ------------------------------------end-------------------------------------
     try:
         impl = current_app.config[CONFIG_ASK_APPROACHES].get(approach)
         if not impl:
             return jsonify({"error": "unknown approach"}), 400
-        r = await impl.run(request_json["question"], request_json.get("overrides") or {})
+        # ------------------------COSMOSDBロギング用追加:start------------------------
+        r = await impl.run(user_name,request_json["question"], request_json.get("overrides") or {})
+        # ------------------------------------end-------------------------------------
         return jsonify(r)
     except Exception as e:
+        # ------------------------COSMOSDBロギング用追加:start------------------------
+        write_error("ask", user_name, str(e))
+        # ------------------------------------end-------------------------------------
         logging.exception("Exception in /ask")
         return jsonify({"error": str(e)}), 500
 
@@ -99,13 +118,21 @@ async def chat():
         return jsonify({"error": "request must be json"}), 415
     request_json = await request.get_json()
     approach = request_json["approach"]
+    # ------------------------COSMOSDBロギング用追加:start------------------------
+    user_name = get_user_name(request)
+    # ------------------------------------end-------------------------------------
     try:
         impl = current_app.config[CONFIG_CHAT_APPROACHES].get(approach)
         if not impl:
             return jsonify({"error": "unknown approach"}), 400
-        r = await impl.run(request_json["history"], request_json.get("overrides") or {})
+        # ------------------------COSMOSDBロギング用追加:start------------------------
+        r = await impl.run(user_name,request_json["history"], request_json.get("overrides") or {})
+        # ------------------------------------end------------------------------------- 
         return jsonify(r)
     except Exception as e:
+        # ------------------------COSMOSDBロギング用追加:start------------------------
+        write_error("chat", user_name, str(e))
+        # ------------------------------------end-------------------------------------
         logging.exception("Exception in /chat")
         return jsonify({"error": str(e)}), 500
 
