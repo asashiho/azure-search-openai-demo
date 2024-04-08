@@ -13,6 +13,7 @@ interface Props {
 
 export const QuestionInput = ({ onSend, disabled, placeholder, clearOnSend }: Props) => {
     const [question, setQuestion] = useState<string>("");
+    const [isTyping, setIsTyping] = useState(false);
 
     const sendQuestion = () => {
         if (disabled || !question.trim()) {
@@ -27,7 +28,7 @@ export const QuestionInput = ({ onSend, disabled, placeholder, clearOnSend }: Pr
     };
 
     const onEnterPress = (ev: React.KeyboardEvent<Element>) => {
-        if (ev.key === "Enter" && !ev.shiftKey) {
+        if (ev.key === "Enter" && !ev.shiftKey && !isTyping) {
             ev.preventDefault();
             sendQuestion();
         }
@@ -39,6 +40,13 @@ export const QuestionInput = ({ onSend, disabled, placeholder, clearOnSend }: Pr
         } else if (newValue.length <= 1000) {
             setQuestion(newValue);
         }
+    };
+
+    const onCompositionStart = () => {
+        setIsTyping(true);
+    };
+    const onCompositionEnd = () => {
+        setIsTyping(false);
     };
 
     const sendQuestionDisabled = disabled || !question.trim();
@@ -54,6 +62,8 @@ export const QuestionInput = ({ onSend, disabled, placeholder, clearOnSend }: Pr
                 value={question}
                 onChange={onQuestionChange}
                 onKeyDown={onEnterPress}
+                onCompositionStart={onCompositionStart}
+                onCompositionEnd={onCompositionEnd}
             />
             <div className={styles.questionInputButtonsContainer}>
                 <div
